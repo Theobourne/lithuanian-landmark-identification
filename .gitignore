@@ -63,3 +63,4 @@ backend/**/bin/
 backend/**/obj/
 backend/**/*.user
 backend/**/*.suo
+backend/**/uploads/
