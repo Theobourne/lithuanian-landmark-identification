@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import { API_ENDPOINTS } from '../constants/config';
 import { PredictionResult, HistoryRecord } from '../types';
 
@@ -15,16 +16,40 @@ const apiClient = axios.create({
 export const predictLandmark = async (imageUri: string): Promise<PredictionResult> => {
   const formData = new FormData();
 
-  // Prepare image for upload
-  const filename = imageUri.split('/').pop() || 'photo.jpg';
-  const match = /\.(\w+)$/.exec(filename);
-  const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-  formData.append('imageFile', {
-    uri: imageUri,
-    name: filename,
-    type,
-  } as any);
+  if (Platform.OS === 'web') {
+    // For web, fetch the blob and create a File object
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    
+    // Determine proper filename and type
+    let filename = 'photo.jpg';
+    let type = 'image/jpeg';
+    
+    // Try to get type from blob
+    if (blob.type) {
+      type = blob.type;
+      // Set proper extension based on MIME type
+      if (blob.type === 'image/png') {
+        filename = 'photo.png';
+      } else if (blob.type === 'image/jpeg' || blob.type === 'image/jpg') {
+        filename = 'photo.jpg';
+      }
+    }
+    
+    const file = new File([blob], filename, { type });
+    formData.append('imageFile', file);
+  } else {
+    // For mobile (iOS/Android)
+    const filename = imageUri.split('/').pop() || 'photo.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    
+    formData.append('imageFile', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any);
+  }
 
   const response = await apiClient.post<PredictionResult>(
     API_ENDPOINTS.PREDICT,

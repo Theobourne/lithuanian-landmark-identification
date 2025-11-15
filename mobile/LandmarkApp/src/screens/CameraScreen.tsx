@@ -82,9 +82,17 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
             });
         } catch (error: any) {
             console.error('Prediction error:', error);
+            console.error('Error response:', error?.response?.data);
+            console.error('Error status:', error?.response?.status);
+            
+            const errorMessage = error?.response?.data?.error 
+                || error?.response?.data?.message 
+                || error?.message 
+                || 'Failed to connect to server.';
+            
             Alert.alert(
                 'Prediction Failed',
-                error?.response?.data?.error ?? error?.message ?? 'Failed to connect to server.'
+                errorMessage + '\n\nStatus: ' + (error?.response?.status || 'Unknown')
             );
         } finally {
             setLoading(false);

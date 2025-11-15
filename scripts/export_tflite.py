@@ -21,7 +21,7 @@ def build_inference_model(source_model: keras.Model, img_size: int) -> keras.Mod
     inputs = keras.Input(shape=(img_size, img_size, 3), name="inference_input")
     x = keras.applications.mobilenet_v3.preprocess_input(inputs)
 
-    backbone = source_model.get_layer("MobileNetV3Small")
+    backbone = source_model.get_layer("MobileNetV3Large")
     gap = source_model.get_layer("global_average_pooling2d")
     dropout = source_model.get_layer("dropout")
     classifier = source_model.get_layer("dense")

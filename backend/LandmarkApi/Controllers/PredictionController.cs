@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+// using Microsoft.EntityFrameworkCore;
 using LandmarkApi.Services;
-using LandmarkApi.Data;
-using LandmarkApi.Models;
+// using LandmarkApi.Data;
+// using LandmarkApi.Models;
 
 namespace LandmarkApi.Controllers;
 
@@ -11,18 +11,18 @@ namespace LandmarkApi.Controllers;
 public class PredictionController : ControllerBase
 {
     private readonly LandmarkPredictionService _predictionService;
-    private readonly LandmarkDbContext _dbContext;
+    // private readonly LandmarkDbContext _dbContext;
     private readonly ILogger<PredictionController> _logger;
     private readonly IWebHostEnvironment _environment;
 
     public PredictionController(
         LandmarkPredictionService predictionService,
-        LandmarkDbContext dbContext,
+        // LandmarkDbContext dbContext,
         IWebHostEnvironment environment,
         ILogger<PredictionController> logger)
     {
         _predictionService = predictionService;
-        _dbContext = dbContext;
+        // _dbContext = dbContext;
         _environment = environment;
         _logger = logger;
     }
@@ -77,28 +77,12 @@ public class PredictionController : ControllerBase
             using var stream = imageFile.OpenReadStream();
             var result = await _predictionService.PredictAsync(stream);
 
-            // Save to database
-            var record = new PredictionRecord
-            {
-                ImagePath = imagePath,
-                OriginalFilename = imageFile.FileName,
-                ImageSizeBytes = imageFile.Length,
-                Timestamp = DateTime.UtcNow,
-                InferenceTimeMs = result.InferenceTimeMs,
-                TopPrediction = result.Predictions[0].Label,
-                TopConfidence = result.Predictions[0].Confidence,
-                Predictions = result.Predictions.Select(p => new PredictionDetail
-                {
-                    Label = p.Label,
-                    Confidence = p.Confidence,
-                    Rank = p.Rank
-                }).ToList()
-            };
+            // Database saving disabled - running without database
+            // var record = new PredictionRecord { ... };
+            // _dbContext.PredictionRecords.Add(record);
+            // await _dbContext.SaveChangesAsync();
 
-            _dbContext.PredictionRecords.Add(record);
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation($"Prediction completed in {result.InferenceTimeMs}ms. Top prediction: {result.Predictions[0].Label} ({result.Predictions[0].Confidence:P2}). Saved to DB with ID: {record.Id}");
+            _logger.LogInformation($"Prediction completed in {result.InferenceTimeMs}ms. Top prediction: {result.Predictions[0].Label} ({result.Predictions[0].Confidence:P2})");
 
             return Ok(result);
         }
@@ -110,28 +94,13 @@ public class PredictionController : ControllerBase
     }
 
     /// <summary>
-    /// Get prediction history
+    /// Get prediction history (DISABLED - database not configured)
     /// </summary>
     /// <param name="limit">Number of recent predictions to retrieve</param>
     [HttpGet("history")]
-    public async Task<ActionResult> GetHistory([FromQuery] int limit = 20)
+    public ActionResult GetHistory([FromQuery] int limit = 20)
     {
-        var records = await _dbContext.PredictionRecords
-            .OrderByDescending(p => p.Timestamp)
-            .Take(limit)
-            .Select(p => new
-            {
-                p.Id,
-                p.OriginalFilename,
-                p.Timestamp,
-                p.TopPrediction,
-                p.TopConfidence,
-                p.InferenceTimeMs,
-                ImageSizeMb = p.ImageSizeBytes / (1024.0 * 1024.0)
-            })
-            .ToListAsync();
-
-        return Ok(records);
+        return Ok(new { message = "History feature disabled - database not configured", records = new List<object>() });
     }
 
     /// <summary>

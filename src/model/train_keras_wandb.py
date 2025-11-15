@@ -17,7 +17,7 @@ except Exception as e:
 
 # Config dict
 CONFIG = {
-    "arch":"MobileNetV3Small",
+    "arch":"MobileNetV3Large",  # Changed from Small to Large
     "img_size":224,
     "batch":32,
     "epochs":25,
@@ -134,7 +134,7 @@ data_augment = keras.Sequential([
 ], name="aug")
 
 # ==== Model ====
-base = keras.applications.MobileNetV3Small(
+base = keras.applications.MobileNetV3Large(
     input_shape=IMG_SIZE + (3,), include_top=False, weights="imagenet")
 base.trainable = False
 
